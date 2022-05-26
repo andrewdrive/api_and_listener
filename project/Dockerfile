@@ -1,0 +1,9 @@
+FROM python:3.8.10
+ENV PYTHONUNBUFFERED=1
+RUN apt-get update
+RUN apt install -y postgresql-client
+RUN mkdir /code
+WORKDIR /code
+COPY . /code/
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
