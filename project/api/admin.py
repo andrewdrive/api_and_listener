@@ -5,7 +5,7 @@ from api.models import Message
 class MessageAdmin(admin.ModelAdmin):
 
     model = Message
-    list_display = ['text', 'status']
+    list_display = ['id', 'text', 'status']
     ordering = ['status']
    
 
