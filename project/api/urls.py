@@ -6,5 +6,9 @@ from api import views
 
 router = routers.SimpleRouter()
 router.register('message', views.MessageViewSet)
+router.register('message_confirmation', views.)
+
+
+
 
 urlpatterns = router.urls

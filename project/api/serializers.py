@@ -9,3 +9,14 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['user_id', 'text']
+
+
+class MessageConfirmationSerializer(serializers.Serializer):
+    message_id = serializers.IntegerField()
+    success = serializers.BooleanField()
+
+    def validate_message_id(self, value):
+        if Message.objects.filter(id=value).exists():
+            return value
+        else:
+            raise serializers.ValidationError('There is no such message with {} id'.format(value))
