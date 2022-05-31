@@ -2,15 +2,21 @@ from rest_framework import status
 from rest_framework import permissions
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, action
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from drf_yasg.utils import swagger_auto_schema
 from api.models import  Message
 from api.serializers import  MessageSerializer, MessageConfirmationSerializer
-from project.api import serializers
+from django.core.exceptions import ObjectDoesNotExist
+
 
 
 class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
 
 
     def send_message_to_kafka(self):
@@ -22,33 +28,43 @@ class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         print(serializer.validated_data)
         self.perform_create(serializer)
+
         self.send_message_to_kafka()
+
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+# -------------------------------------------------------------------------------------------WORKING WITHOUT JWT
+# @swagger_auto_schema(method='POST', request_body=MessageConfirmationSerializer)
+# @api_view(['POST'])
+# def message_confirmation(request):
 
-class MessageConfirmationViewSet(mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    queryset = Message.objects.all()
-    serializer_class = MessageConfirmationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+#     data = request.data
+#     try:
+#         message = Message.objects.get(id=data['message_id'])
+#         if data['success']:
+#             message.status = 'correct'
+#             message.save()
+#             return Response('message status set [correct]', status=status.HTTP_200_OK)
+#         else:
+#             message.status = 'blocked'
+#             message.save()
+#             return Response('message status set [blocked]', status=status.HTTP_200_OK)
+#     except ObjectDoesNotExist:
+#         return Response('Object with id={} does not exists.'.format(data['message_id']))
+# --------------------------------------------------------------------------------------------WORKING WITHOUT JWT
 
 
+class ConfirmationView(APIView):
+    permissions_classes = [IsAuthenticated,]
+    
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+    @swagger_auto_schema(method='POST', request_body=MessageConfirmationSerializer)
+    @action(methods=['POST'], detail=False, url_path='processing_actions', url_name='processing_action')
+    def post(self, request):
 
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
-        return Response(serializer.data)
-
+        return Response(request.data)
 
 
 

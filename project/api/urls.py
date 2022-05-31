@@ -6,9 +6,12 @@ from api import views
 
 router = routers.SimpleRouter()
 router.register('message', views.MessageViewSet)
-router.register('message_confirmation', views.)
-
-
 
 
 urlpatterns = router.urls
+
+
+urlpatterns += [
+    #path('message_confirmation', views.message_confirmation),  -----------------WORKING WITHOUT JWT
+    path('confirmation', views.ConfirmationView.as_view(), name='hello'),
+]
