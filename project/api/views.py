@@ -2,13 +2,13 @@ from rest_framework import status
 from rest_framework import permissions
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from drf_yasg.utils import swagger_auto_schema
 from api.models import  Message
 from api.serializers import  MessageSerializer, MessageConfirmationSerializer
 from django.core.exceptions import ObjectDoesNotExist
+
 
 
 
@@ -57,15 +57,14 @@ class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
 
 class ConfirmationView(APIView):
-    permissions_classes = [IsAuthenticated,]
+    permissions_classes = [permissions.IsAuthenticated,]
     
 
     @swagger_auto_schema(method='POST', request_body=MessageConfirmationSerializer)
-    @action(methods=['POST'], detail=False, url_path='processing_actions', url_name='processing_action')
+    @action(methods=['POST'], detail=False, url_path='message_confirmation', url_name='message_confirmation')
     def post(self, request):
 
         return Response(request.data)
-
 
 
 # Create your views here.
