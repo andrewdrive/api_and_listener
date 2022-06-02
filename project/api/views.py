@@ -6,10 +6,12 @@ from rest_framework.decorators import action
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from api.models import  Message
-from api.serializers import  MessageSerializer, MessageConfirmationSerializer
+from api.serializers import (MessageSerializer,
+                             MessageConfirmationSerializer,
+                             CustomTokenObtainSerializer)
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
@@ -56,6 +58,11 @@ class ConfirmationView(APIView):
                 return Response('message status set [blocked]', status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response('Object with id={} does not exists.'.format(data['message_id']))
+
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainSerializer
 
 
 # -------------------------------------------------------------------------------------------WORKING WITHOUT JWT

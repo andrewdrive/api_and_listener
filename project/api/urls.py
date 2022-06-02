@@ -12,6 +12,5 @@ urlpatterns = router.urls
 
 
 urlpatterns += [
-    #path('message_confirmation', views.message_confirmation),  -----------------WORKING WITHOUT JWT
     path('message_confirmation', views.ConfirmationView.as_view(), name='hello'),
 ]
