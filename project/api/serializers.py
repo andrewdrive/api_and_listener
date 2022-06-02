@@ -3,7 +3,6 @@ from api.models import Message
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
-
 class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -14,7 +13,6 @@ class MessageSerializer(serializers.ModelSerializer):
 class MessageConfirmationSerializer(serializers.ModelSerializer):
     message_id = serializers.IntegerField()
     success = serializers.BooleanField()
-
 
     class Meta:
         model = Message
@@ -29,3 +27,4 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
         return token
 
         # Add custom claims
+    

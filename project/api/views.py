@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
-from api.models import  Message
+from api.models import Message
 from api.serializers import (MessageSerializer,
                              MessageConfirmationSerializer,
                              CustomTokenObtainSerializer)
@@ -20,10 +20,8 @@ class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (AllowAny,)
     authentication_classes = []
 
-
     def send_message_to_kafka(self):
         pass
-
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -41,9 +39,8 @@ class ConfirmationView(APIView):
     permissions_classes = (IsAuthenticated,)
     authentication_classes = (JWTAuthentication,)
 
-
     @swagger_auto_schema(method='POST', request_body=MessageConfirmationSerializer)
-    @action(methods=['POST'], detail=False, url_path='message_confirmation', url_name='message_confirmation', permission_classes=[IsAuthenticated])
+    @action(methods=['POST'], detail=False, permission_classes=[IsAuthenticated])
     def post(self, request):
         data = request.data
         try:
@@ -58,7 +55,6 @@ class ConfirmationView(APIView):
                 return Response('message status set [blocked]', status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response('Object with id={} does not exists.'.format(data['message_id']))
-
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
