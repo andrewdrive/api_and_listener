@@ -10,7 +10,6 @@ services:
     depends_on:
       - db
       - kafka
-      - kafka-manager
       - zookeeper
   db:
     image: postgres
@@ -30,25 +29,26 @@ services:
       ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181
   kafka:
     image: wurstmeister/kafka
-    # command: bash -c "kafka-topics -zookeeper localhost:2181 -topic My_Topic -create  "
     ports:
       - '9092:9092'
     hostname: kafka
     restart: "always"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: 192.168.0.1
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_PORT: 9092
     depends_on:
       - zookeeper
-  kafka-manager:
-    image: sheepkiller/kafka-manager
+  listener:
+    build: listener/
+    command: python message_checker.py
     environment:
-      ZK_HOSTS: zookeeper
-    ports:
-      - "9000:9000"
+      KAFKA: kafka:9092
     depends_on:
+      - api
+      - zookeeper
       - kafka
-
+    volumes:
+      - "./listener:/code"
  

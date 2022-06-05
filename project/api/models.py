@@ -8,9 +8,8 @@ class Message(models.Model):
     status = models.CharField(max_length=10, choices=StatusType.choices, default=StatusType.review, blank=True, verbose_name='Статус сообщения')
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, swappable=False, verbose_name='Клиент')
 
-
     class Meta:
-        ordering = ['status']
+        ordering = ['id']
     
     def __str__(self):
         return self.text

@@ -19,19 +19,21 @@ class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = (AllowAny,)
-    authentication_classes = []
 
     @staticmethod
     def send_message_to_kafka(data):
-        producer.send('json_topic', data).add_callback(on_send_success).add_errback(on_send_error)
+        producer.send('message_topic', data).add_callback(on_send_success).add_errback(on_send_error)
+
+    def perform_create(self, serializer):
+        return serializer.save().id
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        message_id = self.perform_create(serializer)
         user_id = serializer.validated_data['user_id'].id
         text = serializer.validated_data['text']
-        data = {'user_id': user_id, 'text': text}
-        self.perform_create(serializer)
+        data = {'user_id': user_id, 'message_id': message_id, 'text': text}
         self.send_message_to_kafka(data)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -40,11 +42,15 @@ class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 class ConfirmationView(APIView):
     permissions_classes = (IsAuthenticated,)
     authentication_classes = (JWTAuthentication,)
+    serializer_class = MessageConfirmationSerializer
 
     @swagger_auto_schema(method='POST', request_body=MessageConfirmationSerializer)
     @action(methods=['POST'], detail=False, permission_classes=[IsAuthenticated])
     def post(self, request):
-        data = request.data
+        data = {}
+        serializer = MessageConfirmationSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
         try:
             message = Message.objects.get(id=data['message_id'])
             if data['success']:
@@ -62,23 +68,3 @@ class ConfirmationView(APIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainSerializer
 
-
-# -------------------------------------------------------------------------------------------WORKING WITHOUT JWT
-# @swagger_auto_schema(method='POST', request_body=MessageConfirmationSerializer)
-# @api_view(['POST'])
-# def message_confirmation(request):
-
-#     data = request.data
-#     try:
-#         message = Message.objects.get(id=data['message_id'])
-#         if data['success']:
-#             message.status = 'correct'
-#             message.save()
-#             return Response('message status set [correct]', status=status.HTTP_200_OK)
-#         else:
-#             message.status = 'blocked'
-#             message.save()
-#             return Response('message status set [blocked]', status=status.HTTP_200_OK)
-#     except ObjectDoesNotExist:
-#         return Response('Object with id={} does not exists.'.format(data['message_id']))
-# --------------------------------------------------------------------------------------------WORKING WITHOUT JWT

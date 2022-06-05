@@ -6,7 +6,7 @@ class MessageAdmin(admin.ModelAdmin):
 
     model = Message
     list_display = ['id', 'text', 'status']
-    ordering = ['status']
+    ordering = ['id']
    
 
 admin.site.register(Message, MessageAdmin)
