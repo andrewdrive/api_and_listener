@@ -1,11 +1,18 @@
 import json
 import time
 import requests
+from datetime import datetime
 from kafka import KafkaConsumer
 
 
+def my_log_time():
+    now = datetime.now()
+    date_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    return '[' + date_time_str + '] '
+
+
 time.sleep(5)
-print('----- Hi, listener starts listening Kafka. -----')
+print(my_log_time() + '----- Hi, listener starts listening Kafka. -----')
 consumer = KafkaConsumer('message_topic', bootstrap_servers=['kafka:9092'])
 
 
@@ -23,9 +30,9 @@ class Listener:
         if response.status_code == 200:
             self.refresh_token = response.json()['refresh']
             self.access_token = response.json()['access']
-            print('Tokens obtained successfully.')
+            print(my_log_time() + 'Tokens obtained successfully.')
         else:
-            print(response.status_code, response.text)
+            print(my_log_time() + response.status_code, response.text)
 
     def verify_token(self):
         verify_url = 'http://api:8000/api/token/verify/'
@@ -33,16 +40,16 @@ class Listener:
         response = requests.post(url=verify_url, json=data)
         if response.status_code != 200:
             self.access_token = self.refresh_access_token()
-            print('JWT was invalid, getting the new one...')
+            print(my_log_time() + 'JWT was invalid, getting the new one...')
         else:
-            print('JWT is valid.')
+            print(my_log_time() + 'JWT is valid.')
 
     def refresh_access_token(self):
         refresh_url = 'http://api:8000/api/token/refresh/'
         data = {'refresh': self.refresh_token}
         response = requests.post(url=refresh_url, json=data)
         if response.status_code == 200:
-            print('Got a fresh access token.')
+            print(my_log_time() + 'Got a fresh access token.')
             return response.json()['access']
 
     @staticmethod
@@ -61,37 +68,37 @@ class Listener:
                                      json={'message_id': mess_id, 'success': success},
                                      headers={'Authorization': 'Bearer {}'.format(self.access_token)})
             if response.status_code == 200:
-                print('message id={} with text={} marked as Blocked!'.format(mess_id, text))
+                print(my_log_time() + 'Message id={} with text={} marked as Blocked!'.format(mess_id, text))
 
             elif response.status_code == 401:
+                print(my_log_time() + 'Authentication credentials were not provided, Trying again...')
+                time.sleep(5)
                 self.get_tokens()
                 self.verify_token()
-                print('Authentication credentials were not provided, Trying again...')
-                time.sleep(5)
                 # # # #
                 self.check_and_mark_message(mess_id, text)
             else:
-                print(response.status_code, response.text)
+                print(my_log_time() + response.status_code, response.text)
         else:
             success = True
             response = requests.post(confirm_url,
                                      json={'message_id': mess_id, 'success': success},
                                      headers={'Authorization': 'Bearer {}'.format(self.access_token)})
             if response.status_code == 200:
-                print('message id={} with text={} marked as Correct!'.format(mess_id, text))
+                print(my_log_time() + 'Message id={} with text={} marked as Correct!'.format(mess_id, text))
             elif response.status_code == 401:
+                print(my_log_time() + 'Authentication credentials were not provided, Trying again...')
+                time.sleep(5)
                 self.get_tokens()
                 self.verify_token()
-                print('Authentication credentials were not provided, Trying again...')
-                time.sleep(5)
                 # # # #
                 self.check_and_mark_message(mess_id, text)
             else:
-                print(response.status_code, response.text)
+                print(my_log_time() + response.status_code, response.text)
 
     @staticmethod
     def voice():
-        print("Let's check the messages...")
+        print(my_log_time() + "Let's check the messages...")
 
 
 listener = Listener(username='admin', password='admin')
