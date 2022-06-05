@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
-from api.models import Message
-from api.serializers import (MessageSerializer,
-                             MessageConfirmationSerializer,
-                             CustomTokenObtainSerializer)
+from .models import Message
+from .serializers import (MessageSerializer,
+                          MessageConfirmationSerializer,
+                          CustomTokenObtainSerializer)
+from .kafka_producer import on_send_error, on_send_success, producer
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -20,17 +21,18 @@ class MessageViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = (AllowAny,)
     authentication_classes = []
 
-    def send_message_to_kafka(self):
-        pass
+    @staticmethod
+    def send_message_to_kafka(data):
+        producer.send('json_topic', data).add_callback(on_send_success).add_errback(on_send_error)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        print(serializer.validated_data)
+        user_id = serializer.validated_data['user_id'].id
+        text = serializer.validated_data['text']
+        data = {'user_id': user_id, 'text': text}
         self.perform_create(serializer)
-
-        self.send_message_to_kafka()
-
+        self.send_message_to_kafka(data)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
