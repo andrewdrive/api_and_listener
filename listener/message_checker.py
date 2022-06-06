@@ -11,7 +11,7 @@ def my_log_time():
     return '[' + date_time_str + '] '
 
 
-time.sleep(5)
+time.sleep(10)
 print(my_log_time() + '----- Hi, listener starts listening Kafka. -----')
 consumer = KafkaConsumer('message_topic', bootstrap_servers=['kafka:9092'])
 
@@ -26,13 +26,17 @@ class Listener:
     def get_tokens(self):
         token_url = 'http://api:8000/api/token/'
         auth_data = {'username': self.username, 'password': self.password}
-        response = requests.post(url=token_url, json=auth_data)
+        
+        try: 
+            response = requests.post(url=token_url, json=auth_data)
+        except ConnectionError:
+            print(my_log_time() + 'Connection refused cause not existing admin (superuser)')
         if response.status_code == 200:
             self.refresh_token = response.json()['refresh']
             self.access_token = response.json()['access']
             print(my_log_time() + 'Tokens obtained successfully.')
         else:
-            print(my_log_time() + response.status_code, response.text)
+            print(my_log_time() + str(response.status_code), response.text)
 
     def verify_token(self):
         verify_url = 'http://api:8000/api/token/verify/'
@@ -78,7 +82,7 @@ class Listener:
                 # # # #
                 self.check_and_mark_message(mess_id, text)
             else:
-                print(my_log_time() + response.status_code, response.text)
+                print(my_log_time() + str(response.status_code), response.text)
         else:
             success = True
             response = requests.post(confirm_url,
@@ -94,7 +98,7 @@ class Listener:
                 # # # #
                 self.check_and_mark_message(mess_id, text)
             else:
-                print(my_log_time() + response.status_code, response.text)
+                print(my_log_time() + str(response.status_code), response.text)
 
     @staticmethod
     def voice():
