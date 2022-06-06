@@ -9,11 +9,6 @@ git push -uf origin main
 ```
 ## Installation
     $ docker-compose up
-    $ docker-compose exec api bash
-    $ python manage.py createsuperuser
-username: admin
-password: admin (т.к. захардкожено)
-
 ## Usage
     http://localhost:8001/swagger
 
